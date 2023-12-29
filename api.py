@@ -9,11 +9,16 @@ import uuid
 from PIL import Image
 import glob
 
+
+def clear_temp():
+    if os.path.exists('./temp') and os.path.isdir('./temp'):
+        rmtree('./temp')
+    Path('./temp').mkdir(exist_ok=False)
+
+
 # Initialize Flask app
 app = Flask(__name__)
-if os.path.exists('./temp') and os.path.isdir('./temp'):
-    rmtree('./temp')
-Path('./temp').mkdir(exist_ok=True)
+clear_temp()
 
 # Initialize YOLOv8
 model = YOLO("yolov8n.pt")
@@ -55,11 +60,12 @@ def inference():
         results = model.predict(source=temp_dir, stream=True, verbose=False)
         vehicle_counts = [vehicles_in_result(result.boxes.cls) for result in results]
         vehicle_count = sum(vehicle_counts)
+        clear_temp()
         time_taken = f'{time() - t0:.3f}s'
-        rmtree(temp_dir)
         return jsonify({'vehicle_count' : vehicle_count, 'time_taken': time_taken})
     except Exception as e:
         print(f'{prefix()} Error:', e)
+        clear_temp()
         return { 'error': 'One or more images are corrupt' }, 400
     
 
