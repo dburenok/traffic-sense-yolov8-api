@@ -42,14 +42,11 @@ def inference():
         files = sorted(glob.glob(os.path.join(image_temp_dir, '*.*')))
         pipeline_outputs = yolo_pipeline(images=files, conf_thres=0.25)
         boxes = [x[0] for x in pipeline_outputs]
-        vehicle_counts = list(zip([x.split('/')[-1] for x in files], [len(x) for x in boxes]))
-        vehicle_counts_flat = [item for sub_list in vehicle_counts for item in sub_list]
-        it = iter(vehicle_counts_flat)
-        vehicle_counts = dict(zip(it, it))
+        vehicle_count = sum([len(x) for x in boxes])
         delete_dir(image_temp_dir)
         time_taken = f'{time() - t0:.3f}s'
         print(f'{time_taken} for {len(files)} images')
-        return jsonify({'vehicle_counts' : vehicle_counts, 'time_taken': time_taken})
+        return jsonify({'vehicle_count' : vehicle_count})
     except Exception as e:
         print(e)
         delete_dir(image_temp_dir)
