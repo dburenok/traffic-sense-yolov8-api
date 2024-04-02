@@ -27,27 +27,30 @@ def health():
 @app.route('/api/inference/', methods=['POST'])
 def inference():
     t0 = time()
+    ERR_RESPONSE = jsonify({'vehicle_count' : -1})
     if 'images' not in request.files or not len(request.files.getlist('images')):
-        return { 'error': 'Image files not provided' }, 400
-    image_temp_dir = f'{TEMP_DIR}/{uuid4()}'
+        print('Images not provided')
+        return ERR_RESPONSE
+    image_temp_dir = f'{TEMP_DIR}/{str(uuid4())[0:8]}'
     init_dir(image_temp_dir)
     received_files = request.files.getlist('images')
     for f in received_files:
         file_name = f.headers['Content-Disposition'].split('filename=')[1][1:-1]
         if file_name == '':
-            return { 'error': 'File name invalid' }, 400
+            print('File name not provided')
+            return ERR_RESPONSE
         file_path = f'{image_temp_dir}/{file_name}'
         f.save(file_path)
     try:
-        files = sorted(glob.glob(os.path.join(image_temp_dir, '*.*')))
+        files = sorted(glob.glob(os.path.join(image_temp_dir, '*')))
         pipeline_outputs = yolo_pipeline(images=files, conf_thres=0.25)
         boxes = [x[0] for x in pipeline_outputs]
         vehicle_count = sum([len(x) for x in boxes])
         delete_dir(image_temp_dir)
         time_taken = f'{time() - t0:.3f}s'
-        print(f'{time_taken} for {len(files)} images')
+        print(f'vehicle_count={vehicle_count}, {time_taken} for {len(files)} images')
         return jsonify({'vehicle_count' : vehicle_count})
     except Exception as e:
         print(e)
         delete_dir(image_temp_dir)
-        return { 'error': 'One or more images are corrupt' }, 400
+        return ERR_RESPONSE
