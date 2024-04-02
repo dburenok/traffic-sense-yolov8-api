@@ -15,8 +15,8 @@ yolo_pipeline = Pipeline.create(task="yolov8", model_path=MODEL_PATH)
 
 # Initialize Flask app
 init_dir(TEMP_DIR)
-print("Initializing API...")
 app = Flask(__name__)
+print("API initialized")
 
 
 @app.route('/api/health/', methods=['GET'])
